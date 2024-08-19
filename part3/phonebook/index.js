@@ -24,16 +24,23 @@ let persons = [
   },
 ];
 
-app.get("/api/persons", (request, response) => {
-  response.json(persons);
-});
-
 app.get("/api/info", (request, response) => {
   const personsCount = persons.length;
   const currentTimeDate = new Date();
   response.send(
     `<p>Phonebook has info for ${personsCount} persons</p> <p>${currentTimeDate}</p>`
   );
+});
+
+app.get("/api/persons", (request, response) => {
+  response.json(persons);
+});
+
+app.get("/api/persons/:id", (request, response) => {
+  const id = request.params.id;
+  const person = persons.find((person) => person.id === id);
+  person ? response.json(person) : response.status(404).end();
+  response.json(person);
 });
 
 const PORT = 3001;
