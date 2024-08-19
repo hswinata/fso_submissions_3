@@ -1,7 +1,9 @@
 const morgan = require("morgan");
 const express = require("express");
 const app = express();
+const cors = require("cors");
 
+app.use(cors());
 app.use(express.json());
 
 //Create a custom token req-body.
@@ -79,7 +81,7 @@ app.post("/api/persons/", (request, response) => {
   const newPerson = { ...request.body, id: personId };
 
   persons.push(newPerson);
-  response.status(201).end();
+  response.status(201).json(newPerson);
 });
 
 const PORT = 3001;
