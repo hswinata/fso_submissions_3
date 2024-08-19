@@ -3,7 +3,15 @@ const express = require("express");
 const app = express();
 
 app.use(express.json());
-app.use(morgan("tiny"));
+
+//Create a custom token req-body.
+morgan.token("req-body", (req, res) => JSON.stringify(req.body));
+
+//Create custom formatting for logging.
+const postFormat =
+  ":method :url :status :res[content-length] - :response-time ms :req-body";
+
+app.use(morgan(postFormat));
 
 let persons = [
   {
