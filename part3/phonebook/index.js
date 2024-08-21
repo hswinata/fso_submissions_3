@@ -1,8 +1,11 @@
+require("dotenv").config();
 const morgan = require("morgan");
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const Person = require("./models/person");
 
+//Middleware.
 app.use(cors());
 app.use(express.json());
 app.use(express.static("dist"));
@@ -13,7 +16,6 @@ morgan.token("req-body", (req, res) => JSON.stringify(req.body));
 //Create custom formatting for logging.
 const postFormat =
   ":method :url :status :res[content-length] - :response-time ms :req-body";
-
 app.use(morgan(postFormat));
 
 let persons = [
@@ -48,19 +50,27 @@ app.get("/api/info", (request, response) => {
 });
 
 app.get("/api/persons", (request, response) => {
-  response.json(persons);
+  Person.find({}).then((persons) => {
+    response.json(persons);
+  });
 });
 
 app.get("/api/persons/:id", (request, response) => {
-  const id = request.params.id;
-  const person = persons.find((person) => person.id === id);
-  person ? response.json(person) : response.status(404).end();
+  Person.findById(request.params.id).then((person) => {
+    response.json(person);
+  });
+
+  // const id = request.params.id;
+  // const person = persons.find((person) => person.id === id);
+  // person ? response.json(person) : response.status(404).end();
 });
 
 app.delete("/api/persons/:id", (request, response) => {
-  const id = request.params.id;
-  persons = persons.filter((person) => person.id !== id);
-  response.status(204).end();
+  Person.findByIdAndDelete(request.params.id).then((deletedPerson) => {
+    response.json(deletedPerson);
+  });
+
+  // response.status(204).end();
 });
 
 app.post("/api/persons/", (request, response) => {
@@ -71,18 +81,24 @@ app.post("/api/persons/", (request, response) => {
       .status(400)
       .json({ error: "The name or number is missing." });
 
-  const existingName = persons.find(
-    (person) => person.name.toLowerCase() === name.toLowerCase()
-  );
+  const newPerson = new Person({ name, number });
 
-  if (existingName)
-    return response.status(409).json({ error: "Name must be unique." });
+  newPerson.save().then((savedPerson) => {
+    response.json(savedPerson);
+  });
 
-  const personId = Math.floor(Math.random() * 1e6).toString();
-  const newPerson = { ...request.body, id: personId };
+  // const existingName = persons.find(
+  //   (person) => person.name.toLowerCase() === name.toLowerCase()
+  // );
 
-  persons.push(newPerson);
-  response.status(201).json(newPerson);
+  // if (existingName)
+  //   return response.status(409).json({ error: "Name must be unique." });
+
+  // const personId = Math.floor(Math.random() * 1e6).toString();
+  // const newPerson = { ...request.body, id: personId };
+
+  // persons.push(newPerson);
+  // response.status(201).json(newPerson);
 });
 
 const PORT = process.env.PORT || 3001;
