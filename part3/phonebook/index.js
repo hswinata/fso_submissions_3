@@ -50,14 +50,16 @@ app.get("/api/persons/:id", (request, response, next) => {
 });
 
 app.delete("/api/persons/:id", (request, response, next) => {
-  Person.findByIdAndDelete(request.params.id).then((deletedPerson) => {
-    response.json(deletedPerson);
-  });
+  Person.findByIdAndDelete(request.params.id)
+    .then((deletedPerson) => {
+      response.json(deletedPerson);
+    })
+    .catch((error) => next(error));
 
   // response.status(204).end();
 });
 
-app.post("/api/persons/", (request, response) => {
+app.post("/api/persons/", (request, response, next) => {
   const { name, number } = request.body;
 
   if (!name || !number)
@@ -67,9 +69,12 @@ app.post("/api/persons/", (request, response) => {
 
   const newPerson = new Person({ name, number });
 
-  newPerson.save().then((savedPerson) => {
-    response.json(savedPerson);
-  });
+  newPerson
+    .save()
+    .then((savedPerson) => {
+      response.json(savedPerson);
+    })
+    .catch((error) => next(error));
 
   // const existingName = persons.find(
   //   (person) => person.name.toLowerCase() === name.toLowerCase()
