@@ -18,41 +18,25 @@ const postFormat =
   ":method :url :status :res[content-length] - :response-time ms :req-body";
 app.use(morgan(postFormat));
 
-let persons = [
-  {
-    id: "1",
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: "2",
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: "3",
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: "4",
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
-
-app.get("/api/info", (request, response) => {
-  const personsCount = persons.length;
-  const currentTimeDate = new Date();
-  response.send(
-    `<p>Phonebook has info for ${personsCount} persons</p> <p>${currentTimeDate}</p>`
-  );
+//Routes.
+app.get("/api/info", (request, response, next) => {
+  Person.find({})
+    .then((persons) => {
+      const personsCount = persons.length;
+      const currentTimeDate = new Date();
+      response.send(
+        `<p>Phonebook has info for ${personsCount} persons</p> <p>${currentTimeDate}</p>`
+      );
+    })
+    .catch((error) => next(error));
 });
 
-app.get("/api/persons", (request, response) => {
-  Person.find({}).then((persons) => {
-    response.json(persons);
-  });
+app.get("/api/persons", (request, response, next) => {
+  Person.find({})
+    .then((persons) => {
+      response.json(persons);
+    })
+    .catch((error) => next(error));
 });
 
 app.get("/api/persons/:id", (request, response, next) => {
@@ -65,7 +49,7 @@ app.get("/api/persons/:id", (request, response, next) => {
     });
 });
 
-app.delete("/api/persons/:id", (request, response) => {
+app.delete("/api/persons/:id", (request, response, next) => {
   Person.findByIdAndDelete(request.params.id).then((deletedPerson) => {
     response.json(deletedPerson);
   });
@@ -101,6 +85,12 @@ app.post("/api/persons/", (request, response) => {
   // response.status(201).json(newPerson);
 });
 
+app.put("/api/persons/:id", (request, response, next) => {
+  Person.findByIdAndUpdate(request.params.id, request.body, { new: true })
+    .then((updatedPerson) => response.json(updatedPerson))
+    .catch((error) => next(error));
+});
+
 //Unknown endpoint middleware.
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: "unknown endpoint " });
@@ -110,9 +100,8 @@ app.use(unknownEndpoint);
 //Error handler middleware.
 const errorHandler = (error, request, response, next) => {
   console.error(error.message);
-  if (error.name === "CastError") {
-    return response.status(400).send({ error: "malformatted id" });
-  }
+  error.name === "CastError" &&
+    response.status(400).send({ error: "malformatted id" });
   next(error);
 };
 app.use(errorHandler);
