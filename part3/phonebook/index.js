@@ -52,11 +52,9 @@ app.get("/api/persons/:id", (request, response, next) => {
 app.delete("/api/persons/:id", (request, response, next) => {
   Person.findByIdAndDelete(request.params.id)
     .then((deletedPerson) => {
-      response.json(deletedPerson);
+      response.status(204).json(deletedPerson);
     })
     .catch((error) => next(error));
-
-  // response.status(204).end();
 });
 
 app.post("/api/persons/", (request, response, next) => {
@@ -72,22 +70,11 @@ app.post("/api/persons/", (request, response, next) => {
   newPerson
     .save()
     .then((savedPerson) => {
-      response.json(savedPerson);
+      response.status(201).json(savedPerson);
     })
-    .catch((error) => next(error));
-
-  // const existingName = persons.find(
-  //   (person) => person.name.toLowerCase() === name.toLowerCase()
-  // );
-
-  // if (existingName)
-  //   return response.status(409).json({ error: "Name must be unique." });
-
-  // const personId = Math.floor(Math.random() * 1e6).toString();
-  // const newPerson = { ...request.body, id: personId };
-
-  // persons.push(newPerson);
-  // response.status(201).json(newPerson);
+    .catch((error) => {
+      next(error);
+    });
 });
 
 app.put("/api/persons/:id", (request, response, next) => {
@@ -105,9 +92,11 @@ app.use(unknownEndpoint);
 //Error handler middleware.
 const errorHandler = (error, request, response, next) => {
   console.error(error.message);
-  error.name === "CastError" &&
-    response.status(400).send({ error: "malformatted id" });
-  next(error);
+
+  if (error.name === "CastError")
+    return response.status(400).send({ error: "malformatted id" });
+
+  if (error.name === "ValidationError") return response.status(400).json(error);
 };
 app.use(errorHandler);
 
